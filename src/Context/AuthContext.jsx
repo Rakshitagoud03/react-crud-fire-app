@@ -1,21 +1,52 @@
-import React,{useState,useEffect,useContext,useCallback} from 'react'
-//authcontext=>session management.
-//context ref
-export const AuthContext=React.createContext();
+import React, { createContext, useEffect,  useState, useCallback } from "react";
+import Fireapp from "../Config/firebaseConfig";
 
-//context provider
-const AuthProvider=(props)=>{
-    //current user state->which carries login user credentials
-    //null->login session not strted.=>before login
-    //login user info->after login
-    const [currentUser,setCurrentUser]=useState(null)       //null==store garbage val=> The Garbage value is a random value at an address in the memory of a computer
+// context ref
+export const AuthContext = React.createContext();
+
+// context provider
+const AuthProvider = (props) => {
+    // current user stage -> which carries login user credientials
+    // null -> before login
+    // login user information -> after login
+    const [currentUser,setCurrentUser] = useState(null)
+    const [pending,setPending] = useState(true)
+
+    const initAuth = useCallback(() => {
+        const getAuth = async () => {
+            await Fireapp.auth().onAuthStateChanged((user) => {
+                if(user){
+                    setCurrentUser(user)
+                    setPending(false)
+                }else{
+                    setCurrentUser(null)
+                    setPending(false)
+                }
+            })
+        }
+
+        getAuth()
+    },[currentUser])
+
+    useEffect(() => {
+        initAuth()
+    },[initAuth])
+
+    if(pending) {
+        return(
+            <div className="spinner-border text-success" role="status">
+                <span className="visually-hidden">Loading....</span>
+            </div>
+        )
+    }
 
     return(
-        <AuthContext.Provider value={{currentUser}}>
+        <AuthContext.Provider value={{ currentUser }}>
             {
                 props.children
             }
         </AuthContext.Provider>
     )
 }
+
 export default AuthProvider
